@@ -62,11 +62,13 @@ def search_similar_chunks():
     - user_id: ID of the user
     - query: Text to search for
     Optional query parameters:
+    - content_id: ID of specific content to search within
     - limit: Number of results to return (default: 5)
     """
     # Get and validate parameters
     user_id = request.args.get('user_id')
     query_text = request.args.get('query')
+    content_id = request.args.get('content_id', type=int)
     limit = request.args.get('limit', default=5, type=int)
 
     if not user_id or not query_text:
@@ -75,10 +77,15 @@ def search_similar_chunks():
         }), 400
 
     try:
-        # Step 1: Get all content IDs for the user
-        content_ids = db.session.query(Content.id)\
-            .filter(Content.user_id == user_id)\
-            .all()
+        # Step 1: Get content IDs to search within
+        content_query = db.session.query(Content.id)\
+            .filter(Content.user_id == user_id)
+        
+        if content_id:
+            # If content_id provided, only search within that content
+            content_query = content_query.filter(Content.id == content_id)
+            
+        content_ids = content_query.all()
         content_ids = [id[0] for id in content_ids]
 
         if not content_ids:
@@ -194,6 +201,21 @@ def get_content_by_id(content_id):
         return jsonify({
             'error': 'Internal server error'
         }), 500
+
+# Get text and embedding_id of a chunk by ID
+@app.route('/api/chunk/<int:chunk_id>', methods=['GET'])
+def get_chunk_text_by_id(chunk_id):
+    try:
+        chunk = ContentChunk.query.get(chunk_id)
+        if chunk is None:
+            return jsonify({'error': 'Chunk not found'}), 404
+        return jsonify({
+            'text': chunk.chunk_text,
+            'embedding_id': chunk.embedding_id
+        }), 200
+    except Exception as e:
+        logging.error(f"Error in get_chunk_text_by_id: {str(e)}")
+        return jsonify({'error': 'Internal server error'}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=C_PORT)
