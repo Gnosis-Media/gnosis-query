@@ -10,8 +10,8 @@ logging.basicConfig(
 )
 
 # Configuration
-SEARCH_SERVICE_URL = 'http://localhost:5009'
-EMBEDDING_SERVICE_URL = 'http://localhost:5008'
+SEARCH_SERVICE_URL = 'http://54.152.118.219:80'
+EMBEDDING_SERVICE_URL = 'http://52.23.248.97:80'
 
 def test_search_flow():
     """Test the complete search flow"""

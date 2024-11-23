@@ -5,6 +5,7 @@ import requests
 import logging
 import os
 from datetime import datetime
+from secrets_manager import get_service_secrets
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, 
@@ -14,14 +15,18 @@ logging.basicConfig(level=logging.INFO,
 app = Flask(__name__)
 CORS(app)
 
-C_PORT = 5009
+secrets = get_service_secrets('gnosis-query')
 
-# Database configuration
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://admin:VYglUg5GphMwRuOIv6Lz@content-db.c1ytbjumgtbu.us-east-1.rds.amazonaws.com:3306/content_db'
+
+C_PORT = int(secrets.get('PORT', 5000))
+SQLALCHEMY_DATABASE_URI = (
+    f"mysql+pymysql://{secrets['MYSQL_USER']}:{secrets['MYSQL_PASSWORD_CONTENT']}"
+    f"@{secrets['MYSQL_HOST']}:{secrets['MYSQL_PORT']}/{secrets['MYSQL_DATABASE']}"
+)
+app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Service URLs
-EMBEDDING_API_URL = 'http://localhost:5008'
+EMBEDDING_API_URL = secrets.get('EMBEDDING_API_URL')
 
 db = SQLAlchemy(app)
 
