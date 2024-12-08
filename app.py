@@ -17,7 +17,6 @@ CORS(app)
 
 secrets = get_service_secrets('gnosis-query')
 
-
 C_PORT = int(secrets.get('PORT', 5000))
 SQLALCHEMY_DATABASE_URI = (
     f"mysql+pymysql://{secrets['MYSQL_USER']}:{secrets['MYSQL_PASSWORD_CONTENT']}"
@@ -26,6 +25,7 @@ SQLALCHEMY_DATABASE_URI = (
 app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+API_KEY = secrets.get('API_KEY')
 EMBEDDING_API_URL = secrets.get('EMBEDDING_API_URL')
 
 db = SQLAlchemy(app)
@@ -116,8 +116,10 @@ def search_similar_chunks():
         embedding_ids = list(embedding_to_chunk.keys())
 
         # Step 3: Query embedding service for similar embeddings
+        headers = {'X-API-KEY': API_KEY}
         response = requests.post(
             f'{EMBEDDING_API_URL}/api/embedding/similar',
+            headers=headers,
             json={
                 'text': query_text,
                 'embedding_ids': embedding_ids,
@@ -221,6 +223,24 @@ def get_chunk_text_by_id(chunk_id):
     except Exception as e:
         logging.error(f"Error in get_chunk_text_by_id: {str(e)}")
         return jsonify({'error': 'Internal server error'}), 500
+
+# add middleware
+@app.before_request
+def log_request_info():
+    logging.info(f"Headers: {request.headers}")
+    logging.info(f"Body: {request.get_data()}")
+
+    # for now just check that it has a Authorization header
+    if 'X-API-KEY' not in request.headers:
+        logging.warning("No X-API-KEY header")
+        return jsonify({'error': 'No X-API-KEY'}), 401
+    
+    x_api_key = request.headers.get('X-API-KEY')
+    if x_api_key != API_KEY:
+        logging.warning("Invalid X-API-KEY")
+        return jsonify({'error': 'Invalid X-API-KEY'}), 401
+    else:
+        return
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=C_PORT)

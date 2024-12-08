@@ -7,7 +7,8 @@ set -e
 REGISTRY_NAME="gnosis-query-registry"
 IMAGE_NAME="gnosis/query"
 INSTANCE_ID="i-01ea13838ee60edd9"
-INSTANCE_PUBLIC_IP="54.152.190.179"
+INSTANCE_PUBLIC_IP=$(cat ../secrets.json | jq -r '.["gnosis-query"].QUERY_API_URL' | cut -d'/' -f3 | cut -d':' -f1)
+echo "using $INSTANCE_PUBLIC_IP"
 AWS_REGION="us-east-1"
 KEY_PATH="/Users/chim/Working/cloud/Gnosis/gnosis.pem"
 EC2_USER="ec2-user"
@@ -41,12 +42,9 @@ echo "✨ Build and push complete!"
 
 # SSH into the EC2 instance and execute commands
 echo "🚀 Starting deployment process on EC2 instance..."
-ssh -i "$KEY_PATH" "$EC2_USER@$INSTANCE_PUBLIC_IP" << EOF
-    # make sure docker is installed
-    sudo yum install -y docker
-    sudo service docker start
-    sudo systemctl enable docker
-    sudo usermod -a -G docker $EC2_USER
+ssh -o StrictHostKeyChecking=no -i "$KEY_PATH" "$EC2_USER@$INSTANCE_PUBLIC_IP" << EOF
+    # Prune unused images
+    docker system prune -a -f
 
     # Get the current container ID if it exists
     CONTAINER_ID=\$(docker ps -q --filter ancestor=$ECR_REGISTRY_URI:latest)
