@@ -10,8 +10,8 @@ logging.basicConfig(
 )
 
 # Configuration
-SEARCH_SERVICE_URL = 'http://54.152.118.219:80'
-EMBEDDING_SERVICE_URL = 'http://52.23.248.97:80'
+SEARCH_SERVICE_URL = "http://localhost:5000" # 'http://34.207.126.237:80'
+# EMBEDDING_SERVICE_URL = 'http://44.203.255.78:80'
 
 def test_search_flow():
     """Test the complete search flow"""
@@ -34,7 +34,7 @@ The economic layman only observes that "interested par- ties" succeed again and 
             'limit': 3
         },
         {
-            'user_id': 51,  # Replace with another user ID
+            'user_id': 7,  # Replace with another user ID
             'query': 'how does mises explain the interventionism governments in global affairs',
             'limit': 5
         }
@@ -54,6 +54,9 @@ The economic layman only observes that "interested par- ties" succeed again and 
                     'user_id': test_case['user_id'],
                     'query': test_case['query'],
                     'limit': test_case['limit']
+                },
+                headers={
+                    'X-API-KEY': 'the-most-super-secret-key'
                 }
             )
             
@@ -78,38 +81,41 @@ The economic layman only observes that "interested par- ties" succeed again and 
         except Exception as e:
             logging.error(f"Test failed with error: {str(e)}")
 
-def test_direct_embedding_similarity():
-    """Test the embedding service directly"""
+# def test_direct_embedding_similarity():
+#     """Test the embedding service directly"""
     
-    test_cases = [
-        {
-            'text': 'machine learning and artificial intelligence',
-            'embedding_ids': [1, 2, 3, 4, 5],  # Replace with real embedding IDs
-            'limit': 3
-        }
-    ]
+#     test_cases = [
+#         {
+#             'text': 'machine learning and artificial intelligence',
+#             'embedding_ids': [1, 2, 3, 4, 5],  # Replace with real embedding IDs
+#             'limit': 3
+#         }
+#     ]
     
-    for test_case in test_cases:
-        logging.info(f"\nTesting embedding similarity with parameters:")
-        logging.info(f"Query: {test_case['text']}")
-        logging.info(f"Embedding IDs: {test_case['embedding_ids']}")
+#     for test_case in test_cases:
+#         logging.info(f"\nTesting embedding similarity with parameters:")
+#         logging.info(f"Query: {test_case['text']}")
+#         logging.info(f"Embedding IDs: {test_case['embedding_ids']}")
         
-        try:
-            response = requests.post(
-                f"{EMBEDDING_SERVICE_URL}/api/embedding/similar",
-                json=test_case
-            )
+#         try:
+#             response = requests.post(
+#                 f"{EMBEDDING_SERVICE_URL}/api/embedding/similar",
+#                 json=test_case,
+#                 headers={
+#                     'X-API-KEY': 'the-most-super-secret-key'
+#                 }
+#             )
             
-            if response.status_code == 200:
-                results = response.json()
-                logging.info("\nSimilar Embeddings:")
-                pprint(results)
-            else:
-                logging.error(f"Similarity search failed with status code: {response.status_code}")
-                logging.error(f"Error message: {response.json()}")
+#             if response.status_code == 200:
+#                 results = response.json()
+#                 logging.info("\nSimilar Embeddings:")
+#                 pprint(results)
+#             else:
+#                 logging.error(f"Similarity search failed with status code: {response.status_code}")
+#                 logging.error(f"Error message: {response.json()}")
                 
-        except Exception as e:
-            logging.error(f"Test failed with error: {str(e)}")
+#         except Exception as e:
+#             logging.error(f"Test failed with error: {str(e)}")
 
 def run_tests():
     """Run all tests"""
@@ -119,7 +125,7 @@ def run_tests():
     test_search_flow()
     
     logging.info("\n=== Testing Direct Embedding Similarity ===")
-    test_direct_embedding_similarity()
+    # test_direct_embedding_similarity()
     
     logging.info("\nTests completed!")
 
